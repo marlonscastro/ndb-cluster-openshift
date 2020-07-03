@@ -1,44 +1,116 @@
+# ndb-cluster-openshift
 ubuntu 18
 
+## 1º) Nas maquinas individuais, todas, atualizar todo o sistema;
 sudo apt update
+sudo apt upgrade 
 sudo apt dist-upgrade 
 
+## Se pedir para atualizar o menu do Grub, escolha 
+"install the package mantainer's verision"
 
-########## DATA-NODES ########################################################
 
-dependencias
-* libclass-methodmaker-perl
+##-------- DATA-NODES -----------------------------------------------########
 
-data dir
+## files 
+mysql-cluster-community-data-node_8.0.20-1ubuntu18.04_amd64.deb
+## dependencias para ser instalada 
+libclass-methodmaker-perl
+## data dir
 	/usr/local/mysql/data
-config files
+## config files
 	/etc/my.cnf
-to do 
-	start up services
+### execução
+	iniciar os serviços 
 
-########## MYSQL-NODES ########################################################
+##-------- MYSQL-NODES ----------------------------------------------#########
 
-conjuntos de pacotes .deb já baixados
-
-* libaio1 libmecab2
-config files 
+## files 
+mysql-client_8.0.20-1ubuntu18.04_amd64.deb
+mysql-cluster-community-client_8.0.20-1ubuntu18.04_amd64.deb
+mysql-cluster-community-client-core_8.0.20-1ubuntu18.04_amd64.deb
+mysql-cluster-community-server_8.0.20-1ubuntu18.04_amd64.deb
+mysql-cluster-community-server-core_8.0.20-1ubuntu18.04_amd64.deb
+mysql-common_8.0.20-1ubuntu18.04_amd64.deb
+mysql-server_8.0.20-1ubuntu18.04_amd64.deb
+## dependencias a serem instaladas
+libaio1 libmecab2
+## config files 
 	/etc/mysql/my.cnf
 
+##-------- NDB-MANAGEMENT -------------------------------------------############
 
-########## NDB-MANAGEMENT ########################################################
-
-data dir
+## files 
+mysql-cluster-community-management-server_8.0.20-1ubuntu18.04_amd64.deb
+## data dir
 	/usr/mysql-cluster
-config files 
+## config files 
 	config.ini
-todo 
-	start up services 
+## execução
+	iniciar os serviços
+## -----------------------------------------------------------------------
 
-passo a passo 
+## PASSO A PASSO 
 
-criar -> mkdir -p /usr/mysql-cluster
-e abre /usr/mysql-cluster/config.ini
+## Instalar em todos os nós menos o de MGMT (Gerenciamento)
+sudo apt install libclass-methodmaker-perl libaio1 libmecab2
 
+## Em todos os nós, menos o management, pra instalar todos os .deb
+sudo dpkg -i *.deb
+
+## Depois disso, o Banco Mysql já deve estar disponivel para acesso via terminal
+
+## Agora no Management instalar o ndb-management
+sudo dpkg -i mysql-cluster-community-management-server_8.0.20-1ubuntu18.04_amd64.deb
+
+## Nos NODES o arquivo abaixo é relacionado ao DATA-NODES
+nano /etc/my.cnf  
+
+## adicione o conteúdo abaixo
+[mysql_cluster]
+ndb-connectstring=******ip do management********
+
+## Após isso, se tentar executar ndbd, o node informa que não pode conectar a string nodeid=ip_management
+
+## nos DATA-NODES crie e pasta abaixo
+mkdir -p /usr/mysql-cluster  
+
+## Instalar os serviços do ndbd
+sudo vim /etc/systemd/system/ndbd.service
+
+## E adiciona o conteudo abaixo
+[Unit]
+Description=MySQL NDB Data Node Daemon
+After=network.target audit.service
+
+[Service]
+Type=forking
+ExecStart=/usr/sbin/ndbd
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
+## Executa os comandos abaixo para ativar o auto-start 
+sudo systemctl enable ndbd
+sudo systemctl daemon-reload
+
+## Criar o arquivo 
+sudo nano /etc/mysql/my.cnf
+
+## E adiciona o conteúdo abaixo 
+[mysqld]
+ndbcluster
+ndb-connectstring=******ip do server********
+
+[mysql_cluster]
+ndb-connectstring=******ip do server********
+
+###### Configurações no MANAGEMENT
+mkdir -p /usr/mysql-cluster/config.ini
+## E Adiciona o conteúdo abaixo
 [ndbd default]
 NoOfReplicas=2
 
@@ -65,10 +137,10 @@ NodeId=21
 hostname=*********ip do Nó 2*********
 NodeId=22
 
-e configura o serviço 
+## Criar o arquivo 
+sudo vim /etc/systemd/system/ndb_mgmd.service
 
-sudo vim /etc/systemd/system/ndb_mgmd.service com o conteudo abaixo 
-
+## E adiciona o conteúdo abaixo
 [Unit]
 Description=MySQL NDB Cluster Management Server
 After=network.target audit.service
@@ -83,83 +155,32 @@ Restart=on-failure
 [Install]
 WantedBy=multi-user.target
 
-e depois executa 
-	"sudo systemctl enable ndb_mgmd"
-	"sudo systemctl daemon-reload"
+## E depois executa 
+sudo systemctl enable ndb_mgmd
+sudo systemctl daemon-reload
 
-executa o management 
+## E inicia o Management com o comando abaixo
 sudo ndb_mgmd --initial --config-file=/usr/mysql-cluster/config.ini
 
-depois, se necessário 
-sudo pkill ndb_mgmd
+## Agora vai nos NODES e executa ndb_mgm -e show e ele vai mostrar que o 
+## Management já está ativo 
 
-ao executar em um dos nós 
-ndb_mgm -e show 
-	o sistema mostra que os nós ainda não estão conectados; 
+## E para conectar os DATA-NODES ao management basta digitar
+ndbd
 
-ao executar nos nós o comando "ndbd" os data-nodes conectarão ao server.
+## e para conectar os MYSQL-NODES ao managemnt basta reiniciar o server mysql com
+sudo service mysql restart
 
-para conectar os mysql-api necessita "sudo service mysql restart"
+## Com isso, ambos os nós DATA-NODES quanto MYSQL-NODES já estarão conectados ao management
+## E ao executar o comando ndb_mgm -e show provavelmente já estarão conectados todos os nós
 
 ########## COMANDOS UTEIS ########################################################
-	nbd_mgm -e show -> List all clusters 
-	ndb -> start the node
-	pkill ndbd -> End process nodes 
-	pkill ndb_mgmd -> Finaliza do Management
-	
-
-.................................. configuração ........................................
-
-Data nodes oooooooooooooooooooooooooooooooo
-
-	/etc/my.cnf
-
-[mysql_cluster]
-ndb-connectstring=******ip do server********
-
-diretorios 
-mkdir -p /usr/local/mysql/data
-
-Configurar os serviços #########################3
-sudo vim /etc/systemd/system/ndbd.service
-
-cria o arquivo acima e coloca o conteúdo abaixo 
-e depois executa 
-	"sudo systemctl enable ndbd"
-	"sudo systemctl daemon-reload"
-
-[Unit]
-Description=MySQL NDB Data Node Daemon
-After=network.target audit.service
-
-[Service]
-Type=forking
-ExecStart=/usr/sbin/ndbd
-ExecReload=/bin/kill -HUP $MAINPID
-KillMode=process
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-
-Mysql API oooooooooooooooooooooooooooooooo
-
-	/etc/mysql/my.cnf
-
-[mysqld]
-ndbcluster
-ndb-connectstring=******ip do server********
-
-[mysql_cluster]
-ndb-connectstring=******ip do server********
-
-----------------------------------------------------
-
-Comandos uteis ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+nbd_mgm -e show -> List all clusters 
+ndb -> start the node
+pkill ndbd -> End process nodes 
+pkill ndb_mgmd -> Finaliza do Management
 
 sudo ndb
 sudo pkill ndb
 sudo ndb_mgm -e show 
-
-
 
