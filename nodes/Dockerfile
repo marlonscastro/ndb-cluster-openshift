@@ -5,7 +5,7 @@ FROM ubuntu:18.04
 # USER appuser
 
 RUN apt update && apt upgrade -y && apt dist-upgrade -y && \
-    apt install -y libssl1.1 && \
+    apt install -y libclass-methodmaker-perl libssl1.1 libaio1 libmecab2 libnuma1 psmisc && \
     # Necessario para uso do systemctl - gerenciamento de serviços
     apt install -y systemd-container
 
@@ -17,20 +17,21 @@ RUN dpkg -i ./tmp/*.deb && \
     # mkdir -p /usr/mysql-cluster/ && \
     mkdir -p /etc/systemd/system/
 
-# Configurações do Cluster Gerente
-COPY /config/config.ini ./usr/mysql-cluster/config.ini
-# Configurações do Serviço
-COPY /config/ndb_mgmd.service ./etc/systemd/system/ndb_mgmd.service
+# Configurações do DATA-NODE
+COPY /config/my.cnf ./etc/my.cnf
+# Configurações do API-MYSQL Node
+COPY /config/mysqld-my.cnf ./etc/mysql/my.cnf
 
-RUN cat /etc/systemd/system/ndb_mgmd.service && \
-    systemctl enable ndb_mgmd
+# Configurações do Serviço
+COPY /config/ndbd.service ./etc/systemd/system/ndbd.service
+
+RUN systemctl enable ndbd
 # RUN systemctl daemon-reload
 # RUN systemctl daemon-reexec
 # RUN kill -TERM 1
 
-CMD ["ndb_mgmd", "--initial", "--config-file=usr/mysql-cluster/config.ini", "--ndb-nodeid=1"] 
-# ndb_mgmd --initial --config-file=/usr/mysql-cluster/config.ini
+CMD ["ndbd"] 
 
 
-# docker run -it -d --net=cluster --name=mgmt-node --ip=192.168.0.2 msc/mgm-node
+# docker run -it -d --net=cluster --name=node1 --ip=192.168.0.3 msc/data-node
 
