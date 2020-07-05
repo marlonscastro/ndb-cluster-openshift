@@ -63,7 +63,7 @@ sudo dpkg -i *.deb
 ## Agora no Management instalar o ndb-management
 sudo dpkg -i mysql-cluster-community-management-server_8.0.20-1ubuntu18.04_amd64.deb
 
-## Nos NODES o arquivo abaixo é relacionado ao DATA-NODES
+## Nos NODES o arquivo abaixo é relacionado ao DATA-NODES, crie 
 nano /etc/my.cnf  
 
 ## adicione o conteúdo abaixo

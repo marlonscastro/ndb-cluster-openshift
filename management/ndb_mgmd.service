@@ -1,0 +1,13 @@
+[Unit]
+Description=MySQL NDB Cluster Management Server
+After=network.target audit.service
+
+[Service]
+Type=forking
+ExecStart=/usr/sbin/ndb_mgmd -f /usr/mysql-cluster/config.ini
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
