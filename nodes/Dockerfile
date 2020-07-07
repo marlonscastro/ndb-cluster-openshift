@@ -8,40 +8,50 @@ ENV MYSQL_ROOT_PASSWORD=16scm4
 RUN apt update && apt upgrade -y && apt dist-upgrade -y && \
     apt install -y libclass-methodmaker-perl libssl1.1 libaio1 libmecab2 libnuma1 psmisc && \
     # Necessario para uso do systemctl - gerenciamento de serviços
-    apt install -y systemd-container
+    apt install -y systemd-container debconf-utils && \
+    apt install -y gnupg gnupg1 gnupg2
 
 VOLUME ["/usr/mysql-cluster"]
 VOLUME ["/usr/local/mysql/data"]
 
 COPY /pkg/* ./tmp/  
 
-RUN dpkg -i ./tmp/*.deb && \
-    mkdir -p /etc/systemd/system/
+RUN dpkg -i ./tmp/mysql-common_8.0.20-1ubuntu18.04_amd64.deb && \
+    dpkg -i ./tmp/mysql-cluster-community-client-core_8.0.20-1ubuntu18.04_amd64.deb && \
+    dpkg -i ./tmp/mysql-cluster-community-client_8.0.20-1ubuntu18.04_amd64.deb && \
+    dpkg -i ./tmp/mysql-client_8.0.20-1ubuntu18.04_amd64.deb && \
+    dpkg -i ./tmp/mysql-cluster-community-data-node_8.0.20-1ubuntu18.04_amd64.deb && \
+    # dpkg -i ./tmp/mysql-cluster-community-server-core_8.0.20-1ubuntu18.04_amd64.deb && \
+    # dpkg -i ./tmp/mysql-cluster-community-server_8.0.20-1ubuntu18.04_amd64.deb && \
+    # dpkg -i ./tmp/mysql-server_8.0.20-1ubuntu18.04_amd64.deb && \
+    mkdir -p /etc/systemd/system
 
 
+ENV MYSQL_MAJOR 8.0
+ENV MYSQL_VERSION 8.0.20-1ubuntu18.04
 
-# ENV MYSQL_MAJOR 8.0
-# ENV MYSQL_VERSION 8.0.20-1ubuntu18.04
+RUN echo "deb http://repo.mysql.com/apt/ubuntu/ bionic mysql-cluster-${MYSQL_MAJOR}" > /etc/apt/sources.list.d/mysql.list
+# RUN apt-key adv --keyserver pgp.mit.edu --recv-keys 8C718D3B5072E1F5
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --refresh-keys
 
-# RUN echo "deb http://repo.mysql.com/apt/ubuntu/ bionic mysql-cluster-${MYSQL_MAJOR}" > /etc/apt/sources.list.d/mysql.list
-
-# RUN { \
-# 		echo mysql-cluster-community-server mysql-cluster-community-server/data-dir select ''; \
-# 		echo mysql-cluster-community-server mysql-cluster-community-server/root-pass password ''; \
-# 		echo mysql-cluster-community-server mysql-cluster-community-server/re-root-pass password ''; \
-# 		echo mysql-cluster-community-server mysql-cluster-community-server/remove-test-db select false; \
-# 	} | debconf-set-selections \
-# 	&& apt-get update && apt-get install -y mysql-cluster-community-client="${MYSQL_VERSION}" mysql-cluster-community-server-core="${MYSQL_VERSION}" && rm -rf /var/lib/apt/lists/* \
-# 	&& rm -rf /var/lib/mysql && mkdir -p /var/lib/mysql /var/run/mysqld \
-# 	&& chown -R mysql:mysql /var/lib/mysql /var/run/mysqld \
-# 	&& chmod 777 /var/run/mysqld
-
-
+RUN { \
+		echo mysql-cluster-community-server mysql-cluster-community-server/data-dir select ''; \
+		echo mysql-cluster-community-server mysql-cluster-community-server/root-pass password '16scm4'; \
+		echo mysql-cluster-community-server mysql-cluster-community-server/re-root-pass password '16scm4'; \
+		echo mysql-cluster-community-server mysql-cluster-community-server/remove-test-db select false; \
+	} | debconf-set-selections \
+	&& apt-get update \
+#   && apt-get install -y mysql-cluster-community-client="${MYSQL_VERSION}" mysql-cluster-community-server-core="${MYSQL_VERSION}" && rm -rf /var/lib/apt/lists/* \
+    && apt-get install -y mysql-cluster-community-server-core="${MYSQL_VERSION}" && rm -rf /var/lib/apt/lists/* \
+	&& rm -rf /var/lib/mysql && mkdir -p /var/lib/mysql /var/run/mysqld \
+	&& chown -R mysql:mysql /var/lib/mysql /var/run/mysqld \
+	&& chmod 777 /var/run/mysqld
 
 
 # Configurações do DATA-NODE
 COPY /config/my.cnf ./etc/my.cnf
-# Configurações do API-MYSQL Node
+
+# Configurações do MYSQL Node
 COPY /config/mysqld-my.cnf ./etc/mysql/my.cnf
 
 # Configurações do Serviço
