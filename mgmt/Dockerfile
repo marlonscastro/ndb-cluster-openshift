@@ -28,9 +28,10 @@ RUN yum install -y \
     $MYSQL_SHELL_PACKAGE \
     libpwquality \
   && yum clean all \
-  && mkdir /docker-entrypoint-initdb.d
+  && mkdir /docker-entrypoint-initdb.d \
+  && mkdir -p 
 
-VOLUME /var/lib/mysql
+# VOLUME /var/lib/mysql
 
 COPY docker-entrypoint.sh /entrypoint.sh
 COPY healthcheck.sh /healthcheck.sh
@@ -40,7 +41,7 @@ COPY cnf/mysql-cluster.cnf /etc/
 ENTRYPOINT ["/entrypoint.sh"]
 EXPOSE 3306 33060 2202 1186
 HEALTHCHECK CMD /healthcheck.sh
-CMD ["ndb_mgmd"]
+CMD ["ndb_mgmd", "--no-nodeid-checks"]
 
 
 
