@@ -28,8 +28,7 @@ RUN yum install -y \
     $MYSQL_SHELL_PACKAGE \
     libpwquality \
   && yum clean all \
-  && mkdir /docker-entrypoint-initdb.d \
-  && mkdir -p 
+  && mkdir /docker-entrypoint-initdb.d
 
 # VOLUME /var/lib/mysql
 
