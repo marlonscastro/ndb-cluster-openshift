@@ -59,3 +59,8 @@ CMD ["ndb_mgmd"]
 # docker logs mysql1 2>&1 | grep PASSWORD
 
 # docker exec -it mysql1 mysql -uroot -p
+
+###############################################################################
+
+## Deploy no Openshift 
+# oc new-app https://github.com/marlonscastro/ndb-cluster-openshift.git --context-dir=mgmt --strategy=docker --name mgmt
