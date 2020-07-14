@@ -21,23 +21,23 @@ IndexMemory=64M
 
 [ndb_mgmd]
 NodeId=1
-hostname=mgmt
+hostname=172.35.65.116
 datadir=/var/lib/mysql
 
 [ndbd]
 NodeId=2
-hostname=ndbd1
+hostname=172.35.105.124
 datadir=/var/lib/mysql
 
 [ndbd]
 NodeId=3
-hostname=ndbd2
+hostname=172.35.199.149
 datadir=/var/lib/mysql
 
 [mysqld]
 NodeId=4
-hostname=mysql1
+hostname=172.35.56.125
 
 [mysqld]
 NodeId=5
-hostname=mysql2
+hostname=172.35.150.106
