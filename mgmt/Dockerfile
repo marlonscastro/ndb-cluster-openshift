@@ -40,7 +40,7 @@ COPY cnf/mysql-cluster.cnf /etc/
 ENTRYPOINT ["/entrypoint.sh"]
 EXPOSE 3306 33060 2202 1186
 HEALTHCHECK CMD /healthcheck.sh
-CMD ["ndb_mgmd", "--ndb-nodeid=1"]
+CMD ["ndb_mgmd", "--ndb-nodeid=1", "--nodaemon"]
 
 
 
