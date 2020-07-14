@@ -19,7 +19,7 @@ DataMemory=300M
 IndexMemory=64M
 
 
-[ndb_mgmd]
+[mgm]
 NodeId=1
 hostname=172.35.65.116
 datadir=/var/lib/mysql
