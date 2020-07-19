@@ -30,12 +30,14 @@ RUN yum install -y \
   && yum clean all \
   && mkdir /docker-entrypoint-initdb.d
 
-VOLUME /var/lib/mysql
+# VOLUME /var/lib/mysql
 
 COPY docker-entrypoint.sh /entrypoint.sh
 COPY healthcheck.sh /healthcheck.sh
 COPY cnf/my.cnf /etc/my.cnf
 COPY cnf/mysql-cluster.cnf /etc/mysql-cluster.cnf
+
+RUN cat /etc/my.cnf
 
 ENTRYPOINT ["/entrypoint.sh"]
 EXPOSE 3306 33060 2202 1186
