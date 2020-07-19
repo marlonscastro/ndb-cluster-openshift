@@ -34,8 +34,8 @@ VOLUME /var/lib/mysql
 
 COPY docker-entrypoint.sh /entrypoint.sh
 COPY healthcheck.sh /healthcheck.sh
-COPY cnf/my.cnf /etc/
-COPY cnf/mysql-cluster.cnf /etc/
+COPY cnf/my.cnf /etc/my.cnf
+COPY cnf/mysql-cluster.cnf /etc/mysql-cluster.cnf
 
 ENTRYPOINT ["/entrypoint.sh"]
 EXPOSE 3306 33060 2202 1186
