@@ -41,6 +41,10 @@ ENTRYPOINT ["/entrypoint.sh"]
 EXPOSE 3306 33060 2202 1186
 HEALTHCHECK CMD /healthcheck.sh
 CMD ["mysqld"]
+# CMD ["mysqld", "--defaults-file=/etc/my.cnf"]
+
+# bin/mysqld --defaults-file=/opt/mysql/mysql/etc/my.cnf --initialize --user=mysql
+
 
 
 
